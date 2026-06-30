@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Check Branch Validity') {
+            steps {
+                script {
+                    // Rule 3: If it's NOT main AND doesn't have "feature" in the name, fail!
+                    if (env.BRANCH_NAME != 'master' && !env.BRANCH_NAME.contains('feature')) {
+                        error "Pipeline Failed: Branch '${env.BRANCH_NAME}' is not allowed!"
+                    }
+                }
+            }
+        }
+
+        stage('Run General Tests') {
+            when {
+                // Rule 2: Run on feature branches (or anything allowed that isn't main)
+                expression { env.BRANCH_NAME.contains('feature') }
+            }
+            steps {
+                echo "Running all standard tests for feature branch: ${env.BRANCH_NAME}..."
+                // Your actual test commands (like ./gradlew test or npm test) go here
+            }
+        }
+
+        stage('Run CodeCoverage') {
+            when {
+                // Rule 1: ONLY run on the main branch
+                branch 'master'
+            }
+            steps {
+                echo "Running CodeCoverage tests specifically for the master branch..."
+                // Your coverage commands go here
+            }
+        }
+    }
+}
